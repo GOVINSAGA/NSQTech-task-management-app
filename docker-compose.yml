@@ -1,0 +1,52 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: nsqtech-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - nsqtech-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: nsqtech-backend
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGO_URI=mongodb://mongodb:27017/nsqtech
+      - JWT_SECRET=nsqtech-assessment-secret-2024
+      - JWT_EXPIRES_IN=24h
+      - CORS_ORIGIN=http://localhost:4200
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - nsqtech-network
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: nsqtech-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - nsqtech-network
+    restart: unless-stopped
+
+networks:
+  nsqtech-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
