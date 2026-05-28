@@ -1,0 +1,164 @@
+<div class="dashboard-page">
+  <!-- User Profile Card -->
+  <section class="profile-section">
+    <div class="glass-card profile-card">
+      <div class="profile-avatar">
+        {{ authService.currentUser()?.firstName?.charAt(0) }}{{ authService.currentUser()?.lastName?.charAt(0) }}
+      </div>
+      <div class="profile-info">
+        <h2>{{ authService.userDisplayName() }}</h2>
+        <p class="profile-email font-mono">{{ authService.currentUser()?.email }}</p>
+        <div class="profile-meta">
+          <span [class]="authService.isAdmin() ? 'badge badge-role-admin' : 'badge badge-role-general'">
+            {{ authService.currentUser()?.role | uppercase }}
+          </span>
+          <span class="meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {{ authService.currentUser()?.department }}
+          </span>
+          @if (authService.currentUser()?.lastLogin) {
+            <span class="meta-item text-muted">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Last login: {{ formatDate(authService.currentUser()!.lastLogin!) }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Async Processing Controls -->
+  <section class="controls-section">
+    <div class="glass-card controls-card">
+      <div class="controls-header">
+        <div>
+          <h3>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-secondary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Async API Delay Simulator
+          </h3>
+          <p class="text-secondary" style="font-size: 0.8rem; margin-top: 0.25rem;">
+            Adjust artificial server delay to observe async loading behavior
+          </p>
+        </div>
+        <div class="delay-control">
+          <select
+            class="form-input"
+            [(ngModel)]="selectedDelay"
+            (ngModelChange)="onDelayChange()"
+            id="delay-selector"
+          >
+            @for (opt of delayOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+      @if (isLoadingRecords()) {
+        <div class="progress-section">
+          <div class="progress-bar-container">
+            <div class="progress-bar"></div>
+          </div>
+          <span class="progress-label font-mono">{{ (elapsedTime() / 1000).toFixed(1) }}s elapsed</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Stats Row -->
+  @if (recordStats() && !isLoadingRecords()) {
+    <section class="stats-section">
+      <div class="glass-card stat-card">
+        <span class="stat-value text-accent">{{ records().length }}</span>
+        <span class="stat-label">Records</span>
+      </div>
+      <div class="glass-card stat-card">
+        <span class="stat-value" style="color: var(--status-info)">{{ recordStats()?.byStatus?.['open'] || 0 }}</span>
+        <span class="stat-label">Open</span>
+      </div>
+      <div class="glass-card stat-card">
+        <span class="stat-value" style="color: var(--status-warning)">{{ recordStats()?.byStatus?.['in-progress'] || 0 }}</span>
+        <span class="stat-label">In Progress</span>
+      </div>
+      <div class="glass-card stat-card">
+        <span class="stat-value" style="color: var(--status-success)">{{ recordStats()?.byStatus?.['resolved'] || 0 }}</span>
+        <span class="stat-label">Resolved</span>
+      </div>
+    </section>
+  }
+
+  <!-- Access Note -->
+  @if (accessNote() && !isLoadingRecords()) {
+    <div class="access-note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      {{ accessNote() }}
+    </div>
+  }
+
+  <!-- Records Table -->
+  <section class="records-section">
+    <div class="section-header">
+      <h3>Records</h3>
+      <button class="btn btn-secondary btn-sm" (click)="fetchRecords()" [disabled]="isLoadingRecords()" id="refresh-records">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="isLoadingRecords()"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    @if (isLoadingRecords()) {
+      <!-- Skeleton Table -->
+      <div class="data-table-wrapper">
+        <div class="skeleton-table">
+          @for (i of [1,2,3,4,5,6,7,8]; track i) {
+            <div class="skeleton-row">
+              <div class="skeleton skeleton-text" style="width: 80px;"></div>
+              <div class="skeleton skeleton-text" style="width: 200px;"></div>
+              <div class="skeleton skeleton-text" style="width: 100px;"></div>
+              <div class="skeleton skeleton-text" style="width: 80px;"></div>
+              <div class="skeleton skeleton-text" style="width: 70px;"></div>
+              <div class="skeleton skeleton-text" style="width: 90px;"></div>
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="data-table-wrapper">
+        <table class="data-table" id="records-table">
+          <thead>
+            <tr>
+              <th>Ref ID</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Assigned To</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (record of records(); track record._id) {
+              <tr>
+                <td><code class="font-mono ref-id">{{ record.referenceId }}</code></td>
+                <td class="title-cell">{{ record.title }}</td>
+                <td>{{ record.category }}</td>
+                <td><span [class]="getStatusClass(record.status)">{{ record.status }}</span></td>
+                <td><span [class]="getPriorityClass(record.priority)">{{ record.priority }}</span></td>
+                <td>
+                  @if (record.assignedTo) {
+                    {{ record.assignedTo.firstName }} {{ record.assignedTo.lastName }}
+                  } @else {
+                    <span class="text-muted">Unassigned</span>
+                  }
+                </td>
+                <td class="font-mono" style="font-size: 0.8rem;">{{ formatDate(record.createdAt) }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-center text-muted" style="padding: 3rem;">No records available</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
