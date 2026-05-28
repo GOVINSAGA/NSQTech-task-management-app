@@ -17,4 +17,8 @@ export class RecordService {
     }
     return this.http.get<RecordsResponse>(this.apiUrl, { params });
   }
+
+  createRecord(recordData: any): Observable<{ record: any; message: string }> {
+    return this.http.post<{ record: any; message: string }>(this.apiUrl, recordData);
+  }
 }

@@ -64,6 +64,44 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  showCreateModal = signal(false);
+  newTask = {
+    title: '',
+    description: '',
+    category: 'Feature Request',
+    priority: 'medium',
+    accessLevel: 'general'
+  };
+
+  openCreateModal(): void {
+    this.newTask = {
+      title: '',
+      description: '',
+      category: 'Feature Request',
+      priority: 'medium',
+      accessLevel: 'general'
+    };
+    this.showCreateModal.set(true);
+  }
+
+  createTask(): void {
+    if (!this.newTask.title || !this.newTask.description) {
+      this.toastService.error('Please fill in required fields');
+      return;
+    }
+
+    this.recordService.createRecord(this.newTask).subscribe({
+      next: () => {
+        this.toastService.success('Task created successfully');
+        this.showCreateModal.set(false);
+        this.fetchRecords();
+      },
+      error: (err) => {
+        this.toastService.error(err.error?.message || 'Failed to create task');
+      }
+    });
+  }
+
   onDelayChange(): void {
     this.fetchRecords();
   }

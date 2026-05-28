@@ -98,10 +98,18 @@
   <section class="records-section">
     <div class="section-header">
       <h3>Records</h3>
-      <button class="btn btn-secondary btn-sm" (click)="fetchRecords()" [disabled]="isLoadingRecords()" id="refresh-records">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="isLoadingRecords()"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-        Refresh
-      </button>
+      <div class="header-actions" style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-secondary btn-sm" (click)="fetchRecords()" [disabled]="isLoadingRecords()" id="refresh-records">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [class.spinning]="isLoadingRecords()"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        @if (authService.isAdmin()) {
+          <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Create Task
+          </button>
+        }
+      </div>
     </div>
 
     @if (isLoadingRecords()) {
@@ -161,4 +169,60 @@
       </div>
     }
   </section>
+
+  <!-- Create Task Modal -->
+  @if (showCreateModal()) {
+    <div class="modal-overlay" (click)="showCreateModal.set(false)">
+      <div class="modal-content glass-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Create New Task</h3>
+          <button class="btn-icon" (click)="showCreateModal.set(false)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" class="form-input" [(ngModel)]="newTask.title" placeholder="Enter task title" />
+          </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label>Description</label>
+            <textarea class="form-input" [(ngModel)]="newTask.description" placeholder="Enter detailed description" rows="3"></textarea>
+          </div>
+          <div class="form-row" style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label>Category</label>
+              <select class="form-input" [(ngModel)]="newTask.category">
+                <option value="Feature Request">Feature Request</option>
+                <option value="Bug Report">Bug Report</option>
+                <option value="Support Ticket">Support Ticket</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Security Audit">Security Audit</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select class="form-input" [(ngModel)]="newTask.priority">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label>Access Level</label>
+            <select class="form-input" [(ngModel)]="newTask.accessLevel">
+              <option value="general">General</option>
+              <option value="admin">Admin Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer modal-actions" style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button class="btn btn-secondary" (click)="showCreateModal.set(false)">Cancel</button>
+          <button class="btn btn-primary" (click)="createTask()" [disabled]="!newTask.title || !newTask.description">
+            Create Task
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

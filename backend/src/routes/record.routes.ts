@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { roleGuard } from '../middleware/roleGuard';
 import { delayMiddleware } from '../middleware/delay';
 import { RecordService } from '../services/record.service';
 
@@ -26,6 +27,20 @@ router.get(
               : 'Showing general-access records only',
         },
       });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+router.post(
+  '/',
+  authenticate,
+  roleGuard('admin'),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const record = await RecordService.createRecord(req.body);
+      res.status(201).json({ record, message: 'Record created successfully' });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

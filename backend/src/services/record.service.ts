@@ -19,6 +19,14 @@ export class RecordService {
     );
   }
 
+  static async createRecord(
+    recordData: Partial<IRecord>
+  ): Promise<IRecord> {
+    const record = new Record(recordData);
+    await record.save();
+    return record.populate('assignedTo', 'firstName lastName email');
+  }
+
   static async getRecordStats(): Promise<{
     total: number;
     byStatus: Record<string, number>;
